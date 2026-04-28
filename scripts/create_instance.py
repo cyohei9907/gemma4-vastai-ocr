@@ -53,7 +53,12 @@ def search_offers(api_key: str, min_vram_gb: int) -> list[dict]:
     query = {
         "verified": {"eq": True},
         "rentable": {"eq": True},
-        "gpu_totalram": {"gte": min_vram_gb * 1024},  # MB, summed across GPUs
+        "gpu_total_ram": {"gte": min_vram_gb * 1024},  # MB, summed across GPUs
+        # Ampere or newer — Gemma 4 ships in bf16, which Turing (sm_75) lacks.
+        # compute_cap is stored x10 (750 = sm_7.5, 800 = sm_8.0).
+        "compute_cap": {"gte": 800},
+        # vLLM tensor-parallel works best with 1, 2 or 4 GPUs.
+        "num_gpus": {"lte": 4},
         "cuda_max_good": {"gte": 12.1},
         "inet_down": {"gte": 200},
         "disk_space": {"gte": 120},
@@ -198,7 +203,7 @@ def main() -> None:
     pick = offers[0]
     print(
         f"picked offer {pick['id']}: {pick['gpu_name']} x{pick['num_gpus']} "
-        f"(total {pick['gpu_totalram']/1024:.0f}GB VRAM) @ ${pick['dph_total']:.3f}/h"
+        f"(total {pick['gpu_total_ram']/1024:.0f}GB VRAM) @ ${pick['dph_total']:.3f}/h"
     )
     if args.dry_run:
         return
