@@ -29,7 +29,7 @@ if pgrep -f "vllm.entrypoints.openai.api_server" >/dev/null; then
 fi
 
 echo "==> launching vLLM serving $MODEL_ID on :$SERVE_PORT (logs: $LOG)"
-nohup python -m vllm.entrypoints.openai.api_server \
+nohup python3 -m vllm.entrypoints.openai.api_server \
   --model "$MODEL_ID" \
   --host 0.0.0.0 \
   --port "$SERVE_PORT" \

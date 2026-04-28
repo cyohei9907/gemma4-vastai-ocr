@@ -9,7 +9,7 @@ MODEL_ID="${MODEL_ID:-google/gemma-4-31b-it}"
 SERVE_PORT="${SERVE_PORT:-8000}"
 
 echo "==> install.sh starting (model=$MODEL_ID)"
-echo "==> python: $(python --version 2>&1)"
+echo "==> python3: $(python3 --version 2>&1)"
 echo "==> nvidia-smi:"
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader || true
 
@@ -32,7 +32,7 @@ export HF_HUB_ENABLE_HF_TRANSFER=1
 PROF
 
 # vllm/vllm-openai images already ship vllm; for a plain CUDA image we install it.
-if ! python -c "import vllm" 2>/dev/null; then
+if ! python3 -c "import vllm" 2>/dev/null; then
   echo "==> installing vllm + transformers"
   pip install --upgrade pip
   # Gemma 4 requires recent transformers + vllm
@@ -43,12 +43,12 @@ fi
 # but a token avoids unauthenticated rate limits on large downloads).
 if [[ -n "${HF_TOKEN:-}" ]]; then
   echo "==> logging into Hugging Face"
-  python -c "from huggingface_hub import login; login('$HF_TOKEN')"
+  python3 -c "from huggingface_hub import login; login('$HF_TOKEN')"
 fi
 
 # Pre-fetch weights so the first request to /v1/chat/completions doesn't time out.
 echo "==> pre-fetching $MODEL_ID weights (this is the slow part — 5 to 20 min)"
-python - <<PY
+python3 - <<PY
 import os
 from huggingface_hub import snapshot_download
 snapshot_download(
