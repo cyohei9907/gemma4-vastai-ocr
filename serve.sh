@@ -35,6 +35,7 @@ nohup python3 -m vllm.entrypoints.openai.api_server \
   --port "$SERVE_PORT" \
   --tensor-parallel-size "$TP" \
   --max-model-len 8192 \
+  --max-num-batched-tokens 8192 \
   --gpu-memory-utilization 0.92 \
   --trust-remote-code \
   > "$LOG" 2>&1 &
