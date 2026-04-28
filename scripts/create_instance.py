@@ -176,11 +176,23 @@ def write_instance_file(inst: dict, serve_port: int) -> None:
     print(json.dumps(out, indent=2))
 
 
+def get_offer_by_id(api_key: str, offer_id: int, min_vram_gb: int) -> dict | None:
+    """Fetch a specific offer by ID. The bundles API does not honor an `id`
+    filter and silently caps results at ~64, so we re-use the project's
+    standard search filter and look for the requested id in the result set."""
+    for o in search_offers(api_key, min_vram_gb=min_vram_gb):
+        if o.get("id") == offer_id:
+            return o
+    return None
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--min-vram-gb", type=int, default=80,
                    help="minimum total GPU VRAM in GB (default 80 for gemma-4-31b-it)")
+    p.add_argument("--offer-id", type=int, default=None,
+                   help="rent this exact vast.ai offer ID (skips search)")
     args = p.parse_args()
 
     env = load_env()
@@ -197,10 +209,15 @@ def main() -> None:
         sys.exit("REPO_URL missing — set it to the public clone URL of this repo, e.g. "
                  "https://github.com/<user>/gemma4-vastai-ocr.git")
 
-    offers = search_offers(api_key, min_vram_gb=args.min_vram_gb)
-    if not offers:
-        sys.exit("no matching offers — relax filters or retry later")
-    pick = offers[0]
+    if args.offer_id is not None:
+        pick = get_offer_by_id(api_key, args.offer_id, args.min_vram_gb)
+        if not pick:
+            sys.exit(f"offer {args.offer_id} not found / no longer rentable")
+    else:
+        offers = search_offers(api_key, min_vram_gb=args.min_vram_gb)
+        if not offers:
+            sys.exit("no matching offers — relax filters or retry later")
+        pick = offers[0]
     print(
         f"picked offer {pick['id']}: {pick['gpu_name']} x{pick['num_gpus']} "
         f"(total {pick['gpu_total_ram']/1024:.0f}GB VRAM) @ ${pick['dph_total']:.3f}/h"
