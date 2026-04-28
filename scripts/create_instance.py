@@ -59,7 +59,10 @@ def search_offers(api_key: str, min_vram_gb: int) -> list[dict]:
         "compute_cap": {"gte": 800},
         # vLLM tensor-parallel works best with 1, 2 or 4 GPUs.
         "num_gpus": {"lte": 4},
-        "cuda_max_good": {"gte": 12.1},
+        # vllm/vllm-openai:latest is built against CUDA 13. Hosts with older
+        # drivers (e.g. driver 560 → cuda_max_good=12.8) crash at worker init
+        # with CUDA error 803 (driver/runtime mismatch).
+        "cuda_max_good": {"gte": 13.0},
         "inet_down": {"gte": 200},
         "disk_space": {"gte": 120},
         "rented": {"eq": False},
