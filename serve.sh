@@ -36,7 +36,6 @@ nohup python3 -m vllm.entrypoints.openai.api_server \
   --tensor-parallel-size "$TP" \
   --max-model-len 8192 \
   --gpu-memory-utilization 0.92 \
-  --limit-mm-per-prompt image=4 \
   --trust-remote-code \
   > "$LOG" 2>&1 &
 
