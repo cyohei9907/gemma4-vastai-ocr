@@ -8,6 +8,7 @@ SERVE_PORT="${SERVE_PORT:-8000}"
 export HF_HOME="${HF_HOME:-/workspace/.hf}"
 export HF_HUB_ENABLE_HF_TRANSFER=1
 
+mkdir -p /workspace
 LOG=/workspace/vllm.log
 
 # Detect GPU count to set tensor parallelism. 31B in fp16 needs >=80GB VRAM,

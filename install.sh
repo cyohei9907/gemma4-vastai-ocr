@@ -18,10 +18,11 @@ apt-get update -qq
 apt-get install -y -qq --no-install-recommends git curl ca-certificates
 
 # Use a HF cache on the data disk so it survives `serve.sh` restarts and is
-# big enough for a 31B model (~60GB in fp16).
+# big enough for a 31B model (~60GB in fp16). /workspace may not exist on
+# minimal images, so create it defensively.
 export HF_HOME=/workspace/.hf
 export HF_HUB_ENABLE_HF_TRANSFER=1
-mkdir -p "$HF_HOME"
+mkdir -p /workspace "$HF_HOME"
 
 # Persist env vars for any future SSH login (overwrite, don't append, so
 # re-running install.sh doesn't accumulate duplicate lines).

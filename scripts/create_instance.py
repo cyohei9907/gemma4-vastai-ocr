@@ -81,6 +81,9 @@ def build_onstart(repo_url: str, repo_branch: str, model_id: str, serve_port: in
     hf_export = f"export HF_TOKEN={hf_token}\nexport HUGGING_FACE_HUB_TOKEN={hf_token}" if hf_token else ""
     return f"""#!/bin/bash
 set -euo pipefail
+# vllm/vllm-openai (and other minimal images) don't ship /workspace by default —
+# create it before any redirection or `cd` touches it.
+mkdir -p /workspace
 exec > >(tee -a /workspace/onstart.log) 2>&1
 
 echo "==> onstart.sh @ $(date)"
