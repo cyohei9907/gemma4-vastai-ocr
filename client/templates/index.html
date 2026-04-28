@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>Gemma OCR · 0014</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, -apple-system, sans-serif; max-width: 880px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { margin-bottom: 0.2rem; }
+  .meta { color: #888; font-size: 0.9rem; margin-bottom: 1.2rem; }
+  .drop { border: 2px dashed #888; border-radius: 12px; padding: 2.4rem; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+  .drop.hover { border-color: #4a9eff; background: rgba(74,158,255,0.08); }
+  textarea { width: 100%; min-height: 70px; margin-top: 1rem; font: inherit; padding: 0.6rem; border-radius: 8px; }
+  button { margin-top: 0.8rem; padding: 0.6rem 1.2rem; font-size: 1rem; border-radius: 8px; border: 0; background: #4a9eff; color: white; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: wait; }
+  .preview { margin-top: 1rem; max-width: 100%; border-radius: 8px; max-height: 280px; }
+  pre.out { background: #111; color: #eee; padding: 1rem; border-radius: 8px; white-space: pre-wrap; word-break: break-word; max-height: 60vh; overflow: auto; }
+  .err { color: #d33; }
+  .usage { color: #888; font-size: 0.85rem; margin-top: 0.4rem; }
+</style>
+</head>
+<body>
+  <h1>Gemma OCR</h1>
+  <div class="meta">backend: <code>{{ backend }}</code> · model: <code>{{ model }}</code></div>
+
+  <label id="drop" class="drop">
+    <strong>点击或拖拽图片到这里</strong>
+    <div style="margin-top:.4rem;color:#888">PNG / JPG / WebP — 最多 20MB</div>
+    <input id="file" type="file" accept="image/*" style="display:none" />
+  </label>
+  <img id="preview" class="preview" style="display:none" />
+
+  <textarea id="prompt" placeholder="Prompt (可选)">{{ default_prompt }}</textarea>
+  <button id="go" disabled>解析图片</button>
+
+  <h3 style="margin-top:1.6rem">结果</h3>
+  <pre id="out" class="out">（尚未提交）</pre>
+  <div id="usage" class="usage"></div>
+
+<script>
+  const drop = document.getElementById('drop');
+  const file = document.getElementById('file');
+  const preview = document.getElementById('preview');
+  const promptEl = document.getElementById('prompt');
+  const go = document.getElementById('go');
+  const out = document.getElementById('out');
+  const usage = document.getElementById('usage');
+  let chosen = null;
+
+  function setFile(f) {
+    if (!f || !f.type.startsWith('image/')) return;
+    chosen = f;
+    preview.src = URL.createObjectURL(f);
+    preview.style.display = 'block';
+    go.disabled = false;
+  }
+
+  drop.addEventListener('click', () => file.click());
+  file.addEventListener('change', e => setFile(e.target.files[0]));
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('hover'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('hover'); }));
+  drop.addEventListener('drop', e => setFile(e.dataTransfer.files[0]));
+
+  go.addEventListener('click', async () => {
+    if (!chosen) return;
+    go.disabled = true;
+    out.textContent = '处理中…(首次请求模型加载可能较慢)';
+    usage.textContent = '';
+    out.classList.remove('err');
+
+    const fd = new FormData();
+    fd.append('image', chosen);
+    fd.append('prompt', promptEl.value);
+    const t0 = performance.now();
+    try {
+      const r = await fetch('/api/ocr', { method: 'POST', body: fd });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || r.statusText);
+      out.textContent = j.text;
+      const ms = Math.round(performance.now() - t0);
+      const u = j.usage || {};
+      usage.textContent = `耗时 ${ms} ms · prompt_tokens=${u.prompt_tokens ?? '?'} · completion_tokens=${u.completion_tokens ?? '?'}`;
+    } catch (e) {
+      out.textContent = '错误: ' + e.message;
+      out.classList.add('err');
+    } finally {
+      go.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

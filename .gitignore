@@ -1,0 +1,6 @@
+.env
+.instance.json
+__pycache__/
+*.pyc
+.venv/
+node_modules/
