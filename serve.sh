@@ -12,8 +12,12 @@ LOG=/workspace/vllm.log
 
 # Detect GPU count to set tensor parallelism. 31B in fp16 needs >=80GB VRAM,
 # which usually means 1xH100/A100-80G or 2-4xRTX 4090.
-GPU_COUNT=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
-TP=${GPU_COUNT:-1}
+GPU_COUNT=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | wc -l)
+if [[ -z "$GPU_COUNT" || "$GPU_COUNT" -lt 1 ]]; then
+  echo "ERROR: nvidia-smi reported no GPUs — abort" >&2
+  exit 1
+fi
+TP=$GPU_COUNT
 echo "==> detected $GPU_COUNT GPU(s) — using tensor-parallel=$TP"
 
 # Kill any previous vLLM on the same port before restarting.

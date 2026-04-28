@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if [[ ! -f .instance.json ]]; then
-  echo "no .instance.json — run `make up` first" >&2
+  echo 'no .instance.json — run `make up` first' >&2
   exit 1
 fi
 

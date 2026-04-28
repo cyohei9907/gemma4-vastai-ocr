@@ -20,8 +20,15 @@ apt-get install -y -qq --no-install-recommends git curl ca-certificates
 # Use a HF cache on the data disk so it survives `serve.sh` restarts and is
 # big enough for a 31B model (~60GB in fp16).
 export HF_HOME=/workspace/.hf
+export HF_HUB_ENABLE_HF_TRANSFER=1
 mkdir -p "$HF_HOME"
-echo "export HF_HOME=$HF_HOME" >> /etc/profile.d/gemma4.sh
+
+# Persist env vars for any future SSH login (overwrite, don't append, so
+# re-running install.sh doesn't accumulate duplicate lines).
+cat > /etc/profile.d/gemma4.sh <<'PROF'
+export HF_HOME=/workspace/.hf
+export HF_HUB_ENABLE_HF_TRANSFER=1
+PROF
 
 # vllm/vllm-openai images already ship vllm; for a plain CUDA image we install it.
 if ! python -c "import vllm" 2>/dev/null; then
@@ -30,10 +37,6 @@ if ! python -c "import vllm" 2>/dev/null; then
   # Gemma 4 requires recent transformers + vllm
   pip install "vllm>=0.8.0" "transformers>=4.55.0" "pillow" "huggingface_hub[hf_transfer]"
 fi
-
-# hf_transfer makes the 60GB download a lot faster
-export HF_HUB_ENABLE_HF_TRANSFER=1
-echo "export HF_HUB_ENABLE_HF_TRANSFER=1" >> /etc/profile.d/gemma4.sh
 
 # Optional: log into HF (Gemma 4 is Apache 2.0 — no token strictly required,
 # but a token avoids unauthenticated rate limits on large downloads).

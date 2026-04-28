@@ -66,7 +66,7 @@ def index():
 @app.post("/api/ocr")
 def ocr():
     if not REMOTE_HOST:
-        return jsonify({"error": "REMOTE_HOST not set — run scripts/create_instance.py + deploy.sh first"}), 400
+        return jsonify({"error": "REMOTE_HOST not set — run `make up` first (or set REMOTE_HOST/REMOTE_PORT in .env)"}), 400
 
     f = request.files.get("image")
     if not f:
